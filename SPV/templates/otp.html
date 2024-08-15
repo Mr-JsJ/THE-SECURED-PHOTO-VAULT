@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter OTP - Catalog-Z</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/templatemo-style.css">
+    <style>
+        /* Custom styles for the OTP form */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+            margin: 0;
+        }
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+            padding: 20px;
+            border-radius: 20px;
+            background-color: #ffffff;
+            color: #080808;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            padding-left: 3px;
+            color: #00bfff;
+            position: relative;
+        }
+        .title::before,
+        .title::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            width: 1px;
+            height: 1px;
+            background-color: #00bfff;
+        }
+        .title::before {
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .title::after {
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: pulse 1s linear infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.8);
+                opacity: 0;
+            }
+        }
+        .message, .signin {
+            font-size: 14.5px;
+            color: rgba(8, 8, 8, 0.7);
+        }
+        .signin {
+            text-align: center;
+        }
+        .signin a {
+            color: #00bfff;
+            text-decoration: none;
+        }
+        .signin a:hover {
+            text-decoration: underline;
+        }
+        .form label {
+            position: relative;
+        }
+        .form label .input {
+            background-color: #ffffff;
+            color: #090909;
+            width: 100%;
+            padding: 20px 10px 10px;
+            outline: 0;
+            border: 1px solid rgba(7, 7, 7, 0.2);
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        .form label .input + span {
+            color: rgba(3, 3, 3, 0.8);
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            font-size: 0.9em;
+            cursor: text;
+            transition: 0.3s ease;
+        }
+        .form label .input:focus + span,
+        .form label .input:not(:placeholder-shown) + span {
+            color: #00bfff;
+            top: 5px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .submit {
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 16px;
+            background-color: #00bfff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .submit:hover {
+            background-color: #009fd4;
+        }
+    </style>
+</head>
+<body>
+    <form class="form">
+        <p class="title">SVP OTP</p>
+        <p class="message">Please enter the OTP sent to your email.</p>
+        <label>
+            <input class="input" type="text" maxlength="6" placeholder=" " required>
+            <span>OTP</span>
+        </label>
+        <button class="submit">Verify</button>
+        <p class="signin">Didn't receive the code? <a href="#">Resend OTP</a></p>
+    </form>
+</body>
+</html>

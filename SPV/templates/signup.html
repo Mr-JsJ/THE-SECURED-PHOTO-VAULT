@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVP Sign Up</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <form class="form">
+        <p class="title">Sign Up</p>
+        <label>
+            <input class="input" type="text" placeholder=" " required>
+            <span>Name</span>
+        </label>
+        <label>
+            <input class="input" type="email" placeholder=" " required>
+            <span>Email</span>
+        </label>
+        <label>
+            <input class="input" type="text" placeholder=" " required>
+            <span>Phone no</span>
+        </label>
+        <label>
+            <input class="input" type="password" placeholder=" " required>
+            <span>Password</span>
+        </label>
+        <label>
+            <input class="input" type="password" placeholder=" " required>
+            <span>Confirm password</span>
+        </label>
+        <button class="submit">Submit</button>
+        <p class="signin">Already have an account? <a href="login.html">Sign in</a></p>
+    </form>
+</body>
+</html>

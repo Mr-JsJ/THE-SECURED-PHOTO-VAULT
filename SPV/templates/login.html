@@ -1,0 +1,26 @@
+{% load static %}
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    </style>
+</head>
+<body>
+    <form method="post" class="form">
+        <p class="title">SVP Login</p>
+        <label>
+            <input class="input" type="email" placeholder=" " required>
+            <span>Email</span>
+        </label>
+        <label>
+            <input class="input" type="password" placeholder=" " required>
+            <span>Password</span>
+        </label>
+        <button class="submit">Log in</button>
+        <p class="signin">Don't have an account? <a href="signup.html">Sign up</a></p>
+    </form>
+</body>
+</html>
