@@ -6,10 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    </style>
 </head>
 <body>
-    <form method="post" class="form">
+    <form method="post" class="form" enctype="multipart/form-data">
         <p class="title">SVP Login</p>
         <label>
             <input class="input" type="email" placeholder=" " required>
@@ -20,7 +19,7 @@
             <span>Password</span>
         </label>
         <button class="submit">Log in</button>
-        <p class="signin">Don't have an account? <a href="signup.html">Sign up</a></p>
+        <p class="signin">Don't have an account? <a href="{% url 'signup' %}">Sign up</a></p>
     </form>
 </body>
 </html>

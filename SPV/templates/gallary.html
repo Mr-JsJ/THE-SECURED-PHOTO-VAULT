@@ -1,20 +1,18 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPV gallary</title>
+    <title>SPV Gallery</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}">
     <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
 </head>
 <body>
-    
-
-
+    {% include 'navbar.html' %}       
     <!-- Page content goes here -->
-    <div class="tm-hero d-flex justify-content-center align-items-center" data-parallax="scroll" data-image-src="img/hero.jpg">
+
+    <div class="tm-hero d-flex justify-content-center align-items-center" data-parallax="scroll" data-image-src="{% static 'images/hero.jpg' %}">
         <form class="d-flex tm-search-form">
             <input class="form-control tm-search-input" type="search" placeholder="Search" aria-label="Search">
             <button class="btn btn-outline-success tm-search-btn" type="submit">
@@ -34,22 +32,25 @@
                 </form>
             </div>
         </div>
-
-            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 col-12 mb-5">
-                <figure class="effect-ming tm-video-item">
-                    <img src="{% static 'images/img-01.jpg' %}" alt="Image" class="img-fluid">
-                    <figcaption class="d-flex align-items-center justify-content-center">
-                        <h2>{{name}}</h2>
-                        <a href="photo-detail.html">View more</a>
-                    </figcaption>                    
-                </figure>
-                <div class="d-flex justify-content-between tm-text-gray">
-                    <span class="tm-text-gray-light">{{date}}</span>
-                    <span>TAG:{{tag}}</span>
+        <div class="row">
+            {% for img in img_details %}    
+                <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
+                    <figure class="effect-ming tm-video-item">
+                        <img src="{% static 'images/' %}{{ img.name }}" alt="Image" class="img-fluid">
+                        <figcaption class="d-flex align-items-center justify-content-center">
+                            <h2>{{ img.name }}</h2>
+                            <a href="photo-detail.html">View more</a>
+                        </figcaption>                    
+                    </figure>
+                    <div class="d-flex justify-content-between tm-text-gray">
+                        <span class="tm-text-gray-light">{{ img.date }}</span>
+                        <span>TAG: {{ img.tag }}</span>
+                    </div>
                 </div>
-
-
-
-    
+            {% endfor %}
+        </div>
+    </div>
+    <!--footer-->
+    {% include 'footer.html' %}    
 </body>
 </html>

@@ -1,6 +1,5 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
+<html >
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,7 +9,8 @@
 </head>
 <body>
     <form class="form">
-        <p class="title">Sign Up</p>
+        {% csrf_token %}
+        <p class="title">SVP Sign Up</p>
         <label>
             <input class="input" type="text" placeholder=" " required>
             <span>Name</span>
@@ -32,7 +32,7 @@
             <span>Confirm password</span>
         </label>
         <button class="submit">Submit</button>
-        <p class="signin">Already have an account? <a href="login.html">Sign in</a></p>
+        <p class="signin">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
     </form>
 </body>
 </html>
