@@ -1,38 +1,42 @@
 {% load static %}
-<html >
+<html>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVP Sign Up</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modal.css' %}">
 </head>
 <body>
-    <form class="form">
+    {% if messages %}
+        <div id="messageModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="form">
         {% csrf_token %}
         <p class="title">SVP Sign Up</p>
         <label>
-            <input class="input" type="text" placeholder=" " required>
+            <input class="input" type="text" name="name" placeholder=" " required>
             <span>Name</span>
         </label>
         <label>
-            <input class="input" type="email" placeholder=" " required>
+            <input class="input" type="email" name="email" placeholder=" " required>
             <span>Email</span>
         </label>
         <label>
-            <input class="input" type="text" placeholder=" " required>
-            <span>Phone no</span>
-        </label>
-        <label>
-            <input class="input" type="password" placeholder=" " required>
+            <input class="input" type="password" name="password" placeholder=" " required>
             <span>Password</span>
-        </label>
-        <label>
-            <input class="input" type="password" placeholder=" " required>
-            <span>Confirm password</span>
         </label>
         <button class="submit">Submit</button>
         <p class="signin">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
     </form>
+    <script src="{% static 'js/modal.js' %}"></script>
 </body>
 </html>
