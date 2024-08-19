@@ -33,7 +33,7 @@
         </div>
     {% endif %}
         <button class="submit">Verify</button>
-        <p class="signin">Didn't receive the code? <a href="#">Resend OTP</a></p>
+        <p class="signin">Didn't receive the code? <a href="{% url 'resend_otp' %}">Resend OTP</a></p>
     </form>
     <script>
         // Function to hide the messages after 5 seconds
