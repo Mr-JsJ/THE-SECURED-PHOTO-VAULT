@@ -9,13 +9,23 @@
 </head>
 <body>
     <form method="post" class="form" enctype="multipart/form-data">
+        {% csrf_token %}
         <p class="title">SVP Login</p>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         <label>
-            <input class="input" type="email" placeholder=" " required>
+            <input class="input" type="email" name="email" placeholder=" " required>
             <span>Email</span>
         </label>
         <label>
-            <input class="input" type="password" placeholder=" " required>
+            <input class="input" type="password" name="password" placeholder=" " required>
             <span>Password</span>
         </label>
         <button class="submit">Log in</button>

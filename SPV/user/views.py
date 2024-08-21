@@ -1,19 +1,19 @@
 from django.shortcuts import render,redirect
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password,check_password
 from .models import Users
 from django.contrib import messages
-from .otp import otp_gen, send_email
+from .otp import otp_gen,send_email,otp_request,login_otp
 import pyotp
-import os
-from django.conf import settings
-import csv
+
+
+
 # Create your views here.
 def signup(request):
     if request.method == 'POST':
         name = request.POST['name']
         email = request.POST['email']
         password = request.POST['password']
-
+        print(password)
         # Validate inputs
         if not name or not email or not password:
             messages.error(request, 'All fields are required.')
@@ -67,53 +67,51 @@ def resend_otp(request):
     return redirect('otp_request')
 
 
-def otp_request(request):
-    if request.method == 'POST':
-        entered_otp = request.POST['otp']
-        secret = request.session.get('otp_secret')
-
-        if not secret:
-            messages.error(request, 'Session expired or invalid request.')
-            return redirect('signup')
-
-        totp = pyotp.TOTP(secret)
-        print("Entered OTP:", entered_otp)
-        print("Secret:", secret)
-
-        # Allow OTP to be valid for 2 minutes (120 seconds)
-        if totp.verify(entered_otp, valid_window=3):  # 4 intervals of 30 seconds each = 120 seconds
-            # OTP is valid, create the user
-            name = request.session.get('name')
-            email = request.session.get('email')
-            password = request.session.get('password')
-
-            new_user = Users(name=name, email=email, password=password)
-            new_user.save()
-              # Create a folder for the user with their ID
-            user_id = new_user.id
-            user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
-
-            # Ensure the directory is created if it doesn't exist
-            os.makedirs(user_images_dir, exist_ok=True)
-
-            csv_file_path = os.path.join(settings.META_DATA,f'SPV{user_id}.csv')
-            with open(csv_file_path, mode='w', newline='') as csvfile:
-                fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-            # Clear session
-            request.session.flush()
-
-            return redirect('login')  # Redirect to login after successful registration
-        else:
-            messages.error(request, 'Invalid OTP. Please try again.')
-            return redirect('otp_request')
-
-    return render(request, 'otp.html')
-
 
 def login(request):
-     return render(request,'login.html')
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        if not email or not password:
+            messages.error(request, 'Email and password are required.')
+            return redirect('login')
+
+        # Check if the email exists
+        try:
+            user = Users.objects.get(email=email)
+        except Users.DoesNotExist:
+            messages.error(request, 'Invalid email or password.')
+            return redirect('login')
+
+        # Check password
+        if not check_password(password, user.password):
+            messages.error(request, 'Invalid email or password.')
+            return redirect('login')
+
+        # Generate and send OTP
+        secret = pyotp.random_base32()
+        otp = otp_gen(secret)
+        send_email(email, otp)
+
+        # Save user details and OTP secret in the session for verification
+        request.session['login_email'] = email
+        request.session['otp_secret'] = secret
+
+        # Redirect to OTP verification page
+        return redirect('login_otp')
+
+    return render(request, 'login.html')
+
+def logout(request):
+    # Clear the user's session
+    request.session.flush()
+    
+    # Optionally, display a success message
+    messages.success(request, 'You have been logged out successfully.')
+    
+    # Redirect to the login page
+    return redirect('login')
 
 def gallary(request):
      Images={'img_details':[
@@ -155,3 +153,7 @@ def gallary(request):
           },]}
      
      return render(request,'gallary.html',Images)
+
+# def gallary(request):
+    
+#     return render(request,'gallary.html',Images)

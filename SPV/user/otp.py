@@ -1,12 +1,17 @@
-import pyotp
-import smtplib
 from email.message import EmailMessage
 from django.conf import settings
+from django.shortcuts import render,redirect
+from django.contrib import messages
+from .models import Users
+import pyotp
+import os
+import csv
+import smtplib
 
 def otp_gen(secret):
     totp = pyotp.TOTP(secret)
     return totp.now()
-
+#=============================================================================================================
 def send_email(to, otp):
     msg = EmailMessage()
     subject = "Verify your email"
@@ -16,10 +21,82 @@ def send_email(to, otp):
     msg['to'] = to
     user = "spvproject24@gmail.com"
     msg['from'] = user
-    password = ""
+    password = "ghup enlk daqk gidi"
     
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
     server.login(user, password)
     server.send_message(msg)
     server.quit()
+#=================================================================================================================
+def otp_request(request):
+    if request.method == 'POST':
+        entered_otp = request.POST['otp']
+        secret = request.session.get('otp_secret')
+
+        if not secret:
+            messages.error(request, 'Session expired or invalid request.')
+            return redirect('signup')
+
+        totp = pyotp.TOTP(secret)
+        print("Entered OTP:@@@@@", entered_otp)
+        print("Secret:@@@@@@", secret)
+
+        # Allow OTP to be valid for 2 minutes (120 seconds)
+        if totp.verify(entered_otp, valid_window=3):  # 4 intervals of 30 seconds each = 120 seconds
+            # OTP is valid, create the user
+            name = request.session.get('name')
+            email = request.session.get('email')
+            password = request.session.get('password')
+            print(password)
+            new_user = Users(name=name, email=email, password=password)
+
+            new_user.save()
+              # Create a folder for the user with their ID
+            user_id = new_user.id
+            user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
+
+            # Ensure the directory is created if it doesn't exist
+            os.makedirs(user_images_dir, exist_ok=True)
+
+            csv_file_path = os.path.join(settings.META_DATA,f'SPV{user_id}.csv')
+            with open(csv_file_path, mode='w', newline='') as csvfile:
+                fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+            # Clear session
+            request.session.flush()
+
+            return redirect('login')  # Redirect to login after successful registration
+        else:
+            messages.error(request, 'Invalid OTP. Please try again.')
+            return redirect('otp_request')
+
+    return render(request, 'otp.html')
+#===========================================================================================================================
+def login_otp(request):
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp')
+        secret = request.session.get('otp_secret')
+
+        if not secret:
+            messages.error(request, 'Session expired or invalid request.')
+            return redirect('login')
+
+        totp = pyotp.TOTP(secret)
+        print("Entered OTP:++++++", entered_otp)
+        print("Secret:++++++", secret)
+        if totp.verify(entered_otp, valid_window=3):  # Allow OTP to be valid for 2 minutes
+            # OTP is valid, log the user in
+            email = request.session.get('login_email')
+            user = Users.objects.get(email=email)
+            request.session['user_id'] = user.id
+            request.session['email'] = user.email
+            request.session.pop('otp_secret', None)
+            request.session.pop('login_email', None)
+            return redirect('gallery')  # Redirect to the gallery or user's profile page
+        else:
+            messages.error(request, 'Invalid OTP. Please try again.')
+            return redirect('login_otp')
+
+    return render(request, 'otp.html')
