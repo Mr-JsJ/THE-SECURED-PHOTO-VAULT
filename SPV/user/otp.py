@@ -7,6 +7,7 @@ import pyotp
 import os
 import csv
 import smtplib
+from .img import image_folder_access
 
 def otp_gen(secret):
     totp = pyotp.TOTP(secret)
@@ -94,6 +95,7 @@ def login_otp(request):
             request.session['email'] = user.email
             request.session.pop('otp_secret', None)
             request.session.pop('login_email', None)
+            image_folder_access(user.id)
             return redirect('gallery')  # Redirect to the gallery or user's profile page
         else:
             messages.error(request, 'Invalid OTP. Please try again.')
