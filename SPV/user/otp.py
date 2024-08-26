@@ -7,7 +7,6 @@ import pyotp
 import os
 import csv
 import smtplib
-from .img import image_folder_access
 
 def otp_gen(secret):
     totp = pyotp.TOTP(secret)
@@ -30,7 +29,7 @@ def send_email(to, otp):
     server.send_message(msg)
     server.quit()
 #=================================================================================================================
-def otp_request(request):
+def reg_otp(request):
     if request.method == 'POST':
         entered_otp = request.POST['otp']
         secret = request.session.get('otp_secret')
@@ -71,7 +70,7 @@ def otp_request(request):
             return redirect('login')  # Redirect to login after successful registration
         else:
             messages.error(request, 'Invalid OTP. Please try again.')
-            return redirect('otp_request')
+            return redirect('reg_otp')
 
     return render(request, 'otp.html')
 #===========================================================================================================================
@@ -95,8 +94,7 @@ def login_otp(request):
             request.session['email'] = user.email
             request.session.pop('otp_secret', None)
             request.session.pop('login_email', None)
-            image_folder_access(user.id)
-            return redirect('gallery')  # Redirect to the gallery or user's profile page
+            return redirect('gallary')  # Redirect to the gallery or user's profile page
         else:
             messages.error(request, 'Invalid OTP. Please try again.')
             return redirect('login_otp')

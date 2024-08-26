@@ -2,10 +2,10 @@ from django.shortcuts import render,redirect
 from django.contrib.auth.hashers import make_password,check_password
 from .models import Users
 from django.contrib import messages
-from .otp import otp_gen,send_email,otp_request,login_otp
+from .otp import otp_gen,send_email,reg_otp,login_otp
+from .img import csv_access,image_folder_path
 import pyotp
-
-
+from django.conf import settings
 
 # Create your views here.
 def signup(request):
@@ -39,9 +39,10 @@ def signup(request):
         request.session['otp_secret'] = secret
 
         # Redirect to OTP verification page
-        return redirect('otp_request')
+        return redirect('reg_otp')
 
     return render(request, 'signup.html')
+
 
 def resend_otp(request):
     # Check if the user is in the session
@@ -64,7 +65,7 @@ def resend_otp(request):
     
     messages.success(request, 'A new OTP has been sent to your email.')
     
-    return redirect('otp_request')
+    return redirect('reg_otp')
 
 
 
@@ -106,56 +107,115 @@ def login(request):
 def logout(request):
     # Clear the user's session
     request.session.flush()
-    
     # Optionally, display a success message
-    messages.success(request, 'You have been logged out successfully.')
-    
+    messages.success(request, 'You have been logged out successfully.')    
     # Redirect to the login page
     return redirect('login')
 
+import os
+from django.conf import settings
+from datetime import datetime
+import csv
+
+def upload(request):
+    user_id = request.session.get('user_id')
+
+    if request.method == 'POST':
+        images = request.FILES.getlist('images')
+
+        # Directory where user's images will be stored
+        user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
+        os.makedirs(user_images_dir, exist_ok=True)
+
+        # Path to the user's CSV file for metadata storage
+        csv_file_path = os.path.join(settings.META_DATA, f'SPV{user_id}.csv')
+
+        # Open the CSV file in append mode
+        with open(csv_file_path, mode='a', newline='') as csvfile:
+            fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            # Iterate over the uploaded images
+            for image in images:
+                # Save the image to the user's directory
+                image_path = os.path.join(user_images_dir, image.name)
+                with open(image_path, 'wb+') as destination:
+                    for chunk in image.chunks():
+                        destination.write(chunk)
+
+                
+
+                # Collect image metadata
+                image_metadata = {
+                    'image_name': image.name,
+                    'public_key':'',
+                    'private_key':'' ,
+                    'tags': request.POST.get('tags', ''),  # Assuming you have a form field for tags
+                    'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+
+                # Write metadata to the CSV file
+                writer.writerow(image_metadata)
+
+        # Optionally, add a success message
+        messages.success(request, 'Images uploaded successfully!')
+
+    return render(request, 'upload.html')
+
+
+
 # def gallary(request):
-#      Images={'img_details':[
-#           {'name':'img-01.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-02.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-03.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-04.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-05.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-06.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#            {'name':'img-07.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#            {'name':'img-08.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },
-#           {'name':'img-09.jpg',
-#           'date':'10-08-2002',
-#           'tag':'object'
-#           },]}
-     
-#      return render(request,'gallary.html',Images)
+#      user_id = request.session.get('user_id')
+#      if not user_id:
+#         messages.error(request, 'User not logged in.')
+#         return redirect('login')
+
+#     # Access image details from the CSV file
+#      image_details = csv_access(user_id)
+#      complete_details=image_folder_path(user_id,image_details)
+#      print(complete_details)
+#      return render(request,'gallary.html',complete_details)
 
 def gallary(request):
-
-    Images={'img_details':[{}]}
-
-    return render(request,'gallary.html',Images)
+     user_id = request.session.get('user_id')
+     image_details = csv_access(user_id)
+     print(image_details)
+     Images={'img_details':[
+          {'name':'img-01.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-02.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-03.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-04.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-05.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-06.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+           {'name':'img-07.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+           {'name':'img-08.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },
+          {'name':'img-09.jpg',
+          'date':'10-08-2002',
+          'tag':'object'
+          },]}
+     
+     return render(request,'gallary.html',Images)
