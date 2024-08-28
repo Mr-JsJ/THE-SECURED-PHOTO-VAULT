@@ -22,16 +22,6 @@ def csv_access(id):
 
 
 
-def image_folder_path(id,image_details):
-    Images = {'img_details': []}
-    user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{id}SVPimages')
-    image_files = [f for f in os.listdir(user_images_dir) if os.path.isfile(os.path.join(user_images_dir, f))]
-    for detail in image_details['img_details']:
-        image_name = detail['name']
-        if image_name in image_files:
-            detail['file_path'] = os.path.join(settings.IMAGES_VAULT, f'{id}SVPimages', image_name)
-            Images['img_details'].append(detail)
-    return Images
 
 
 

@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image details</title>
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}">
+        <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
+    </head>
+<body>
+    <!-- Page Loader -->
+    <!-- <div id="loader-wrapper">
+        <div id="loader"></div>
+
+        <div class="loader-section section-left"></div>
+        <div class="loader-section section-right"></div>
+
+    </div> -->
+    {% include 'navbar.html' %}   
+    <div class="container-fluid tm-container-content tm-mt-60">
+        <div class="row mb-4">
+            <h2 class="col-12 tm-text-primary"> {{img}}</h2>
+        </div>
+        <div class="row tm-mb-90">            
+            <div class="col-xl-8 col-lg-7 col-md-6 col-sm-12">
+                <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/{{ img }}" alt="Image" class="img-fluid">
+            </div>
+            <div class="col-xl-4 col-lg-5 col-md-6 col-sm-12">
+                <div class="tm-bg-gray tm-video-details">
+                    <div class="text-center mb-5">
+                        <a href="{{ MEDIA_URL }}images_vault/{{ user_id }}SVPimages/{{ img }}" class="btn btn-primary tm-btn-big" download="{{ img }}">Download</a>
+
+                    </div>                    
+                    <div class="mb-4 d-flex flex-wrap">
+                        <div class="mr-4 mb-2">
+                            <span class="tm-text-gray-dark">Dimension: </span><span class="tm-text-primary">{{dimension}}</span>
+                        </div>
+                        <div class="mr-4 mb-2">
+                            <span class="tm-text-gray-dark">Format: </span><span class="tm-text-primary">{{format}}</span>
+                        </div>
+                    </div>
+                    <div class="mb-4 d-flex flex-wrap">
+                        <div class="mr-4 mb-2">
+                            <span class="tm-text-gray-dark">Date: </span><span class="tm-text-primary">{{date}}</span>
+                        </div>
+                        <div class="mr-4 mb-2">
+                            <span class="tm-text-gray-dark">Tag: </span><span class="tm-text-primary">{{tag}}</span>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+       
+    </div> <!-- container-fluid, tm-container-content -->
+<!--footer-->
+{% include 'footer.html' %}    
+    
+    <script src="js/plugins.js"></script>
+    <script>
+        $(window).on("load", function() {
+            $('body').addClass('loaded');
+        });
+    </script>
+</body>
+</html>

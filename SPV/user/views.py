@@ -2,10 +2,15 @@ from django.shortcuts import render,redirect
 from django.contrib.auth.hashers import make_password,check_password
 from .models import Users
 from django.contrib import messages
-from .otp import otp_gen,send_email,reg_otp,login_otp
-from .img import csv_access,image_folder_path
-import pyotp
+from .otp import otp_gen,send_email,reg_otp,login_otp,resend_otp
+from .csvfile import csv_access
+from PIL import Image
 from django.conf import settings
+import pyotp
+import os
+from .secure import upload
+from datetime import datetime
+import csv
 
 # Create your views here.
 def signup(request):
@@ -13,7 +18,7 @@ def signup(request):
         name = request.POST['name']
         email = request.POST['email']
         password = request.POST['password']
-        print(password)
+        
         # Validate inputs
         if not name or not email or not password:
             messages.error(request, 'All fields are required.')
@@ -42,31 +47,6 @@ def signup(request):
         return redirect('reg_otp')
 
     return render(request, 'signup.html')
-
-
-def resend_otp(request):
-    # Check if the user is in the session
-    if 'email' not in request.session:
-        messages.error(request, 'Session expired. Please sign up again.')
-        return redirect('signup')
-    
-    email = request.session.get('email')
-    secret = request.session.get('otp_secret')
-
-    if not email or not secret:
-        messages.error(request, 'Invalid request. Please try again.')
-        return redirect('signup')
-    
-    # Generate a new OTP
-    otp = otp_gen(secret)
-    
-    # Send the new OTP to the user's email
-    send_email(email, otp)
-    
-    messages.success(request, 'A new OTP has been sent to your email.')
-    
-    return redirect('reg_otp')
-
 
 
 def login(request):
@@ -112,110 +92,96 @@ def logout(request):
     # Redirect to the login page
     return redirect('login')
 
-import os
-from django.conf import settings
-from datetime import datetime
-import csv
 
-def upload(request):
-    user_id = request.session.get('user_id')
 
-    if request.method == 'POST':
-        images = request.FILES.getlist('images')
+# def upload(request):
+#     user_id = request.session.get('user_id')
 
-        # Directory where user's images will be stored
-        user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
-        os.makedirs(user_images_dir, exist_ok=True)
+#     if request.method == 'POST':
+#         images = request.FILES.getlist('images')
 
-        # Path to the user's CSV file for metadata storage
-        csv_file_path = os.path.join(settings.META_DATA, f'SPV{user_id}.csv')
+#         # Directory where user's images will be stored
+#         user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
+#         os.makedirs(user_images_dir, exist_ok=True)
 
-        # Open the CSV file in append mode
-        with open(csv_file_path, mode='a', newline='') as csvfile:
-            fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#         # Path to the user's CSV file for metadata storage
+#         csv_file_path = os.path.join(settings.META_DATA, f'SPV{user_id}.csv')
 
-            # Iterate over the uploaded images
-            for image in images:
-                # Save the image to the user's directory
-                image_path = os.path.join(user_images_dir, image.name)
-                with open(image_path, 'wb+') as destination:
-                    for chunk in image.chunks():
-                        destination.write(chunk)
+#         # Open the CSV file in append mode
+#         with open(csv_file_path, mode='a', newline='') as csvfile:
+#             fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+#             # Iterate over the uploaded images
+#             for image in images:
+#                 # Save the image to the user's directory
+#                 image_path = os.path.join(user_images_dir, image.name)
+#                 with open(image_path, 'wb+') as destination:
+#                     for chunk in image.chunks():
+#                         destination.write(chunk)
 
                 
 
-                # Collect image metadata
-                image_metadata = {
-                    'image_name': image.name,
-                    'public_key':'',
-                    'private_key':'' ,
-                    'tags': request.POST.get('tags', ''),  # Assuming you have a form field for tags
-                    'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
+#                 # Collect image metadata
+#                 image_metadata = {
+#                     'image_name': image.name,
+#                     'public_key':'',
+#                     'private_key':'' ,
+#                     'tags': request.POST.get('tags', 'on tag'),  # Assuming you have a form field for tags
+#                     'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+#                 }
 
-                # Write metadata to the CSV file
-                writer.writerow(image_metadata)
+#                 # Write metadata to the CSV file
+#                 writer.writerow(image_metadata)
 
-        # Optionally, add a success message
-        messages.success(request, 'Images uploaded successfully!')
+#         # Optionally, add a success message
+#         messages.success(request, 'Images uploaded successfully!')
 
-    return render(request, 'upload.html')
+#     return render(request, 'upload.html')
 
-
-
-# def gallary(request):
-#      user_id = request.session.get('user_id')
-#      if not user_id:
-#         messages.error(request, 'User not logged in.')
-#         return redirect('login')
-
-#     # Access image details from the CSV file
-#      image_details = csv_access(user_id)
-#      complete_details=image_folder_path(user_id,image_details)
-#      print(complete_details)
-#      return render(request,'gallary.html',complete_details)
 
 def gallary(request):
-     user_id = request.session.get('user_id')
-     image_details = csv_access(user_id)
-     print(image_details)
-     Images={'img_details':[
-          {'name':'img-01.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-02.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-03.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-04.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-05.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-06.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-           {'name':'img-07.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-           {'name':'img-08.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },
-          {'name':'img-09.jpg',
-          'date':'10-08-2002',
-          'tag':'object'
-          },]}
-     
-     return render(request,'gallary.html',Images)
+    user_id = request.session.get('user_id')
+    images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
+    image_filenames = os.listdir(images_dir)
+    
+    # Get the image details from the CSV
+    image_details = csv_access(user_id)
+    img_details = []
+    for image in image_details['img_details']:
+        if image['name'] in image_filenames:
+            img_details.append({
+                'name': image['name'],
+                'date': image['date'],  # Use the date from the CSV
+                'tag': image['tag'],    # Use the tag from the CSV
+                'public_key': image.get('public_key'),  # Include other data if necessary
+                'private_key': image.get('private_key'),
+            })
+
+    context = {
+        'img_details': img_details,
+        'MEDIA_URL': settings.MEDIA_URL,
+        'user_id': user_id,  # Pass user_id to the template
+    }
+
+    return render(request, 'gallary.html', context)
+
+
+
+
+def details(request,image_name,image_date,image_tag):
+    # Use the image_name parameter in your logic
+    user_id = request.session.get('user_id')
+    image_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages',image_name)
+    with Image.open(image_path) as img:
+        img_dimension = f"{img.width}x{img.height}"
+        img_format = img.format
+
+    context = {'img': image_name,
+               'date':image_date,
+               'tag':image_tag,
+               'user_id': user_id,
+               'dimension': img_dimension,
+               'format': img_format,
+               }
+    return render(request,'details.html',context)

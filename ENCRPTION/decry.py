@@ -51,6 +51,6 @@ unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
 image_data = unpadder.update(padded_image_data) + unpadder.finalize()
 
 # Save the decrypted image
-decrypted_image_path = 'C:/Users/jsjji/OneDrive/Desktop/git/MCA-MINI PROJECT/THE-SECURED-PHOTO-VAULT/ENCRPTION/DIMAGES/decrypted_image.png'
+decrypted_image_path = 'C:/Users/jsjji/OneDrive/Desktop/git/MCA-MINI PROJECT/THE-SECURED-PHOTO-VAULT/ENCRPTION/DIMAGES/decrypted_image1.png'
 with open(decrypted_image_path, 'wb') as f:
     f.write(image_data)

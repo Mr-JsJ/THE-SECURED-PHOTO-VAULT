@@ -17,13 +17,13 @@ public_key_bytes = public_key.public_bytes(
 )
 
 # Load the image to encrypt
-image_path = 'C:/Users/jsjji/OneDrive/Desktop/git/MCA-MINI PROJECT/THE-SECURED-PHOTO-VAULT/ENCRPTION/apple.jpg'
+image_path = 'C:/Users/jsjji/OneDrive/Desktop/git/MCA-MINI PROJECT/THE-SECURED-PHOTO-VAULT/ENCRPTION/ball.jpg'
 with open(image_path, 'rb') as f:
     image_data = f.read()
 
 # Generate a shared key using ECC
 shared_key = private_key.exchange(ec.ECDH(), public_key)
-
+print(shared_key)
 # Derive a symmetric key from the shared key
 salt = os.urandom(16)
 kdf = PBKDF2HMAC(

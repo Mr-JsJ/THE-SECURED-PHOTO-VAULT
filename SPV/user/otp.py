@@ -39,8 +39,6 @@ def reg_otp(request):
             return redirect('signup')
 
         totp = pyotp.TOTP(secret)
-        print("Entered OTP:@@@@@", entered_otp)
-        print("Secret:@@@@@@", secret)
 
         # Allow OTP to be valid for 2 minutes (120 seconds)
         if totp.verify(entered_otp, valid_window=3):  # 4 intervals of 30 seconds each = 120 seconds
@@ -54,16 +52,21 @@ def reg_otp(request):
             new_user.save()
               # Create a folder for the user with their ID
             user_id = new_user.id
-            user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
-
+            user_images_dir = os.path.join(settings.IMAGES_VAULT,f'{user_id}SVPimages')
+            
             # Ensure the directory is created if it doesn't exist
             os.makedirs(user_images_dir, exist_ok=True)
+            # Subdirectory path for decrypted images
+            decrypted_dir_path= os.path.join(user_images_dir, 'decrypted')
+            # Create the decrypted subdirectory
+            os.makedirs(decrypted_dir_path, exist_ok=True)
 
             csv_file_path = os.path.join(settings.META_DATA,f'SPV{user_id}.csv')
             with open(csv_file_path, mode='w', newline='') as csvfile:
                 fieldnames = ['image_name', 'public_key', 'private_key', 'tags', 'date']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
+            
             # Clear session
             request.session.flush()
 
@@ -74,6 +77,31 @@ def reg_otp(request):
 
     return render(request, 'otp.html')
 #===========================================================================================================================
+
+def resend_otp(request):
+    # Check if the user is in the session
+    if 'email' not in request.session:
+        messages.error(request, 'Session expired. Please sign up again.')
+        return redirect('signup')
+    
+    email = request.session.get('email')
+    secret = request.session.get('otp_secret')
+
+    if not email or not secret:
+        messages.error(request, 'Invalid request. Please try again.')
+        return redirect('signup')
+    
+    # Generate a new OTP
+    otp = otp_gen(secret)
+    
+    # Send the new OTP to the user's email
+    send_email(email, otp)
+    
+    messages.success(request, 'A new OTP has been sent to your email.')
+    
+    return redirect('reg_otp')
+
+#============================================================================================================================
 def login_otp(request):
     if request.method == 'POST':
         entered_otp = request.POST.get('otp')
@@ -84,8 +112,7 @@ def login_otp(request):
             return redirect('login')
 
         totp = pyotp.TOTP(secret)
-        print("Entered OTP:++++++", entered_otp)
-        print("Secret:++++++", secret)
+
         if totp.verify(entered_otp, valid_window=3):  # Allow OTP to be valid for 2 minutes
             # OTP is valid, log the user in
             email = request.session.get('login_email')
