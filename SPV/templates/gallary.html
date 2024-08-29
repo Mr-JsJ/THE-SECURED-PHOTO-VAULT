@@ -35,7 +35,7 @@
             {% for img in img_details %}    
             <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
                 <figure class="effect-ming tm-video-item">
-                    <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/{{ img.name }}" alt="Image" class="img-fluid">
+                    <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/decrypted/{{ img.name }}" alt="Image" class="img-fluid">
                     <figcaption class="d-flex align-items-center justify-content-center">
                         <h2>{{ img.name }}</h2>
                         <a href="{% url 'details' img.name img.date img.tag %}">View more</a>
