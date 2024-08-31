@@ -11,7 +11,8 @@ urlpatterns = [
     path('resend-otp/', views.resend_otp, name='resend_otp'),
     path('upload/', views.upload, name='upload'),
     path('logout/',views.logout,name='logout'),  
-    path('details/<str:image_name>/<str:image_date>/<str:image_tag>/', views.details, name='details'), 
+    path('details/<str:image_name>/<str:image_date>/<str:image_tag>/', views.details, name='details'),
+    path('delete/<str:image_name>/', views.delete_image, name='delete_image'), 
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

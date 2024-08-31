@@ -45,9 +45,14 @@
                     <span class="tm-text-gray-light">{{ img.date }}</span>
                     <span>TAG: {{ img.tag }}</span>
                 </div>
+                <div class="d-flex justify-content-end">
+                    <form action="{% url 'delete_image' img.name %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </div>
             </div>
-        {% endfor %}
-        
+            {% endfor %}
         </div>
     </div>
     <!--footer-->

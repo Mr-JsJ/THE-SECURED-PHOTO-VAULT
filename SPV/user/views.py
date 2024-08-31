@@ -158,3 +158,56 @@ def details(request,image_name,image_date,image_tag):
                'format': img_format,
                }
     return render(request,'details.html',context)
+
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse
+from django.conf import settings
+import os
+import csv
+
+def delete_image(request, image_name):
+    # Ensure this view can only be accessed via POST request
+    if request.method == "POST":
+        user_id = request.session.get('user_id')
+        
+        # Construct the path to the image
+        image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/{image_name}')
+        img_name=f"{image_name}.bin" 
+        image_path_encpted = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/{img_name}')
+        # Check if the image file exists, then delete it
+        if os.path.exists(image_path):
+            os.remove(image_path)
+        if os.path.exists(image_path_encpted):
+            os.remove(image_path_encpted)    
+            
+            # Optionally, remove the image details from the CSV file
+            csv_file_path = os.path.join(settings.MEDIA_ROOT, f'meta_data/SPV{user_id}.csv')
+            
+            if os.path.exists(csv_file_path):
+                updated_rows = []
+                
+                # Read the CSV file and exclude the deleted image from the list
+                with open(csv_file_path, 'r') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        if row['image_name'] != img_name:
+                            updated_rows.append(row)
+                
+                # Write the updated list back to the CSV file
+                with open(csv_file_path, 'w', newline='') as file:
+                    writer = csv.DictWriter(file, fieldnames=reader.fieldnames)
+                    writer.writeheader()
+                    writer.writerows(updated_rows)
+        
+        # Redirect back to the gallery page
+        return redirect(reverse('gallary'))
+
+    # If the request method is not POST, return to the gallery
+    return redirect(reverse('gallary'))
+
+from django.shortcuts import render
+from django.conf import settings
+import os
+import csv
+
+
