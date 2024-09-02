@@ -92,9 +92,6 @@ def upload(request):
                         encryption_algorithm=serialization.NoEncryption()
                     )
                     
-                    # private_key_path = os.path.join(user_images_dir, f'private_key_{image_name}.pem')
-                    # with open(private_key_path, 'wb') as f:
-                    #     f.write(private_key_bytes)
 
                     # Collect image metadata
                     image_metadata = {

@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.hashers import make_password,check_password
 from .models import Users
 from django.contrib import messages
@@ -10,7 +10,8 @@ from .csvfile import csv_access
 import os
 import pyotp
 import shutil
-
+from django.urls import reverse
+import csv
 # Create your views here.
 def signup(request):
     if request.method == 'POST':
@@ -159,11 +160,7 @@ def details(request,image_name,image_date,image_tag):
                }
     return render(request,'details.html',context)
 
-from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse
-from django.conf import settings
-import os
-import csv
+
 
 def delete_image(request, image_name):
     # Ensure this view can only be accessed via POST request
@@ -205,9 +202,6 @@ def delete_image(request, image_name):
     # If the request method is not POST, return to the gallery
     return redirect(reverse('gallary'))
 
-from django.shortcuts import render
-from django.conf import settings
-import os
-import csv
+
 
 
