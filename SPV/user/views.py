@@ -12,7 +12,7 @@ import pyotp
 import shutil
 from django.urls import reverse
 import csv
-# Create your views here.
+
 def signup(request):
     if request.method == 'POST':
         name = request.POST['name']
@@ -84,6 +84,7 @@ def login(request):
 
     return render(request, 'login.html')
 
+
 def logout(request):
     user_id = request.session.get('user_id')
     if user_id:
@@ -104,6 +105,45 @@ def logout(request):
     return redirect('login')
 
 
+
+# def gallary(request):
+#     user_id = request.session.get('user_id')
+#     images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
+#     image_filenames = os.listdir(images_dir)
+    
+#     # Get the image details from the CSV
+#     image_details = csv_access(user_id)
+#     img_details = []
+    
+#     for image in image_details['img_details']:
+#         if image['name'] in image_filenames:
+#             encrypted_image_path = os.path.join(images_dir, image['name'])
+#             decrypted_image_path = os.path.join(images_dir, 'decrypted', image['name'])
+            
+#             # Ensure the decrypted directory exists
+#             os.makedirs(os.path.dirname(decrypted_image_path), exist_ok=True)
+            
+#             # Decrypt the image if it hasn't been decrypted yet
+#             if not os.path.exists(decrypted_image_path):
+#                 decrypt_image(user_id, image['name'], image['private_key'], image['public_key'])
+#             img_name=image['name'].replace('.bin', '') 
+             
+#             # Add the image details to the list
+#             img_details.append({
+#                 'name': img_name,  # Use the original name from the CSV
+#                 'date': image['date'],  # Use the date from the CSV
+#                 'tag': image['tag'],    # Use the tag from the CSV
+#                 'decrypted_image_url': os.path.join(settings.MEDIA_URL, 'images_vault', f'{user_id}SVPimages', 'decrypted', img_name),
+#             })
+
+#     context = {
+#         'img_details': img_details,
+#         'MEDIA_URL': settings.MEDIA_URL,
+#         'user_id': user_id,  # Pass user_id to the template
+#     }
+
+#     return render(request, 'gallary.html', context)
+
 def gallary(request):
     user_id = request.session.get('user_id')
     images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
@@ -112,6 +152,9 @@ def gallary(request):
     # Get the image details from the CSV
     image_details = csv_access(user_id)
     img_details = []
+
+    # Get the tag parameter from the request
+    tag_filter = request.GET.get('tag', None)
     
     for image in image_details['img_details']:
         if image['name'] in image_filenames:
@@ -124,7 +167,8 @@ def gallary(request):
             # Decrypt the image if it hasn't been decrypted yet
             if not os.path.exists(decrypted_image_path):
                 decrypt_image(user_id, image['name'], image['private_key'], image['public_key'])
-            img_name=image['name'].replace('.bin', '') 
+                
+            img_name = image['name'].replace('.bin', '')
              
             # Add the image details to the list
             img_details.append({
@@ -134,10 +178,18 @@ def gallary(request):
                 'decrypted_image_url': os.path.join(settings.MEDIA_URL, 'images_vault', f'{user_id}SVPimages', 'decrypted', img_name),
             })
 
+    # Filter images by tag if a tag is provided
+    if tag_filter:
+        img_details = [img for img in img_details if img['tag'] == tag_filter]
+
+    # Optional: Sort images by date or any other criteria
+    img_details.sort(key=lambda x: x['date'])  # Example: sort by date
+
     context = {
         'img_details': img_details,
         'MEDIA_URL': settings.MEDIA_URL,
         'user_id': user_id,  # Pass user_id to the template
+        'selected_tag': tag_filter,  # Pass the selected tag to the template for filtering
     }
 
     return render(request, 'gallary.html', context)

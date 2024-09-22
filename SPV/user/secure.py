@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
 from .csvfile import csv_access
-
+from .tag import get_image_tag 
 
 def upload(request):
     user_id = request.session.get('user_id')
@@ -41,6 +41,7 @@ def upload(request):
                 for image in images:
                     # Ensure file name is safe
                     image_name = os.path.basename(image.name)
+                    
 
                     # Load the image to encrypt
                     image_data = image.read()
@@ -91,14 +92,15 @@ def upload(request):
                         format=serialization.PrivateFormat.PKCS8,
                         encryption_algorithm=serialization.NoEncryption()
                     )
-                    
+
+                    auto_tag = get_image_tag(image)#auto tad module
 
                     # Collect image metadata
                     image_metadata = {
                         'image_name': f'{image_name}.bin',
                         'public_key': public_key_bytes.decode('utf-8'),
                         'private_key': private_key_bytes.decode('utf-8'),
-                        'tags': request.POST.get('tags', 'one tag'),
+                        'tags': auto_tag,
                         'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
 

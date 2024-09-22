@@ -19,9 +19,9 @@ def send_email(to, otp):
     msg.set_content(body)
     msg['subject'] = subject
     msg['to'] = to
-    user = "email"
+    user = "spvproject24@gmail.com"
     msg['from'] = user
-    password = "password"
+    password = "ghup enlk daqk gidi"
     
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()

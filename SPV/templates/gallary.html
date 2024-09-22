@@ -5,8 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPV Gallery</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}">
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}"/>
     <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
+    <style>
+        .filter-form {
+            display: flex;
+            align-items: center;
+        }
+        .filter-form select, .filter-form button {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
     {% include 'navbar.html' %}       
@@ -26,7 +35,21 @@
                 Latest Photos
             </h2>
             <div class="col-6 d-flex justify-content-end align-items-center">
-                <form action="" class="tm-text-primary">
+                <!-- Tag filter form -->
+                <form action="" method="get" class="filter-form tm-text-primary">
+                    <select name="tag" class="form-control">
+                        <option value="">All Tags</option>
+                        <option value="animal" {% if selected_tag == 'animal' %}selected{% endif %}>Animal</option>
+                        <option value="flower" {% if selected_tag == 'flower' %}selected{% endif %}>Flower</option>
+                        <option value="landscape" {% if selected_tag == 'landscape' %}selected{% endif %}>Landscape</option>
+                        <option value="human" {% if selected_tag == 'human' %}selected{% endif %}>Human</option>
+                        <option value="fruit" {% if selected_tag == 'fruit' %}selected{% endif %}>Fruit</option>
+                        <option value="vehicles" {% if selected_tag == 'vehicles' %}selected{% endif %}>Vehicles</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                </form>
+                <!-- Pagination -->
+                <form class="tm-text-primary">
                     Page <input type="text" value="1" size="1" class="tm-input-paging tm-text-primary"> of 200
                 </form>
             </div>
