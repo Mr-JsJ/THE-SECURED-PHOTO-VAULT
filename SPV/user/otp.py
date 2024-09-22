@@ -6,7 +6,9 @@ from .models import Users
 import pyotp
 import os
 import csv
+from dotenv import load_dotenv
 import smtplib
+
 
 def otp_gen(secret):
     totp = pyotp.TOTP(secret)
@@ -19,10 +21,10 @@ def send_email(to, otp):
     msg.set_content(body)
     msg['subject'] = subject
     msg['to'] = to
-    user = "spvproject24@gmail.com"
+    load_dotenv()
+    user = os.getenv("EMAIL_USER")
     msg['from'] = user
-    password = "ghup enlk daqk gidi"
-    
+    password = os.getenv("EMAIL_PASSWORD")
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
     server.login(user, password)
