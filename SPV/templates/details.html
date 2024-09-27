@@ -10,14 +10,7 @@
         <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
     </head>
 <body>
-    <!-- Page Loader -->
-    <!-- <div id="loader-wrapper">
-        <div id="loader"></div>
-
-        <div class="loader-section section-left"></div>
-        <div class="loader-section section-right"></div>
-
-    </div> -->
+    
     {% include 'navbar.html' %}   
     <div class="container-fluid tm-container-content tm-mt-60">
         <div class="row mb-4">
@@ -30,8 +23,15 @@
             <div class="col-xl-4 col-lg-5 col-md-6 col-sm-12">
                 <div class="tm-bg-gray tm-video-details">
                     <div class="text-center mb-5">
+                        <!-- Download Button -->
                         <a href="{{ MEDIA_URL }}images_vault/{{ user_id }}SVPimages/decrypted/{{ img }}" class="btn btn-primary tm-btn-big" download="{{ img }}">Download</a>
-
+                    </div>
+                    <!-- Delete Button -->
+                    <div class="text-center mb-5">
+                        <form method="post" action="{% url 'delete_image' img %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger tm-btn-big" onclick="return confirm('Are you sure you want to delete this image?');">Delete</button>
+                        </form>
                     </div>                    
                     <div class="mb-4 d-flex flex-wrap">
                         <div class="mr-4 mb-2">
@@ -50,15 +50,13 @@
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
         </div>
-       
     </div> <!-- container-fluid, tm-container-content -->
-<!--footer-->
-{% include 'footer.html' %}    
     
-    <script src="js/plugins.js"></script>
+    {% include 'footer.html' %}
+    
+    <script src="{% static 'js/plugins.js' %}"></script>
     <script>
         $(window).on("load", function() {
             $('body').addClass('loaded');

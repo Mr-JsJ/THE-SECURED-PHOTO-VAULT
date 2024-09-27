@@ -7,12 +7,14 @@ urlpatterns = [
     path('signup/',views.signup,name='signup'),
     path('otp/',views.reg_otp,name='reg_otp'),
     path('login_otp/',views.login_otp,name='login_otp'),
-    path('gallary/',views.gallary,name='gallary'),  
+    path('gallary/',views.gallary,name='gallary'), 
     path('resend-otp/', views.resend_otp, name='resend_otp'),
     path('upload/', views.upload, name='upload'),
     path('logout/',views.logout,name='logout'),  
     path('details/<str:image_name>/<str:image_date>/<str:image_tag>/', views.details, name='details'),
-    path('delete/<str:image_name>/', views.delete_image, name='delete_image'), 
+    path('delete-image/<str:image_name>/', views.delete_image, name='delete_image'),
+    path('delete-multiple-images/', views.delete_multiple_images, name='delete_multiple_images'),
+    path('face-gallary/',views.face_gallary_view, name='face_gallary'), 
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

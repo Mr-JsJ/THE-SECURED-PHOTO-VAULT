@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPV Gallery</title>
+    <title>SPV Gallery with Multi-Image Deletion</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}"/>
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css'%}">
     <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
     <style>
         .filter-form {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
-        .filter-form select, .filter-form button {
+        .filter-form select, .filter-form input, .filter-form button {
             margin-right: 10px;
+        }
+        .tm-input-paging {
+            width: 50px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    {% include 'navbar.html' %}       
-    <!-- Page content goes here -->
-    <div class="tm-hero d-flex justify-content-center align-items-center" data-parallax="scroll" data-image-src="{% static 'images/hero.jpg' %}">
-        <form class="d-flex tm-search-form">
-            <input class="form-control tm-search-input" type="search" placeholder="Search" aria-label="Search">
+    {% include 'navbar.html' %}
+    <div class="tm-hero d-flex justify-content-center align-items-center" style="background-image: url('{% static 'images/hero.jpg' %}');">   
+        <form class="d-flex tm-search-form" method="get" action="">
+            <input class="form-control tm-search-input" type="search" name="search" placeholder="Search" aria-label="Search" value="{{ search_query }}">
             <button class="btn btn-outline-success tm-search-btn" type="submit">
                 <i class="fas fa-search"></i>
             </button>
@@ -31,11 +35,8 @@
 
     <div class="container-fluid tm-container-content tm-mt-60">
         <div class="row mb-4">
-            <h2 class="col-6 tm-text-primary">
-                Latest Photos
-            </h2>
+            <h2 class="col-6 tm-text-primary">Latest Photos</h2>
             <div class="col-6 d-flex justify-content-end align-items-center">
-                <!-- Tag filter form -->
                 <form action="" method="get" class="filter-form tm-text-primary">
                     <select name="tag" class="form-control">
                         <option value="">All Tags</option>
@@ -46,39 +47,70 @@
                         <option value="fruit" {% if selected_tag == 'fruit' %}selected{% endif %}>Fruit</option>
                         <option value="vehicles" {% if selected_tag == 'vehicles' %}selected{% endif %}>Vehicles</option>
                     </select>
+
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+
                     <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 </form>
-                <!-- Pagination -->
-                <form class="tm-text-primary">
-                    Page <input type="text" value="1" size="1" class="tm-input-paging tm-text-primary"> of 200
-                </form>
             </div>
         </div>
-        <div class="row">
-            {% for img in img_details %}    
-            <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
-                <figure class="effect-ming tm-video-item">
-                    <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/decrypted/{{ img.name }}" alt="Image" class="img-fluid">
-                    <figcaption class="d-flex align-items-center justify-content-center">
-                        <h2>{{ img.name }}</h2>
-                        <a href="{% url 'details' img.name img.date img.tag %}">View more</a>
-                    </figcaption>                    
-                </figure>
-                <div class="d-flex justify-content-between tm-text-gray">
-                    <span class="tm-text-gray-light">{{ img.date }}</span>
-                    <span>TAG: {{ img.tag }}</span>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <form action="{% url 'delete_image' img.name %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
+
+        <!-- Button to toggle checkboxes -->
+        <form method="post" action="{% url 'delete_multiple_images' %}">
+            {% csrf_token %}
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="button" id="select-images-btn" class="btn btn-primary btn-sm" onclick="toggleSelection()">Select Images</button>
                 </div>
             </div>
-            {% endfor %}
-        </div>
+
+            <div class="row">
+                {% for img in img_details %}
+                <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
+                    <figure class="effect-ming tm-video-item">
+                        <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/decrypted/{{ img.name }}" alt="Image" class="img-fluid">
+                        <figcaption class="d-flex align-items-center justify-content-center">
+                            <h2>{{ img.name }}</h2>
+                            <a href="{% url 'details' img.name img.date img.tag %}">View more</a>
+                        </figcaption>
+                    </figure>
+                    <div class="d-flex justify-content-between tm-text-gray">
+                        <span class="tm-text-gray-light">{{ img.date }}</span>
+                        <span>TAG: {{ img.tag }}</span>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <!-- Checkbox for image selection -->
+                        <input type="checkbox" class="image-select-checkbox" name="image_names" value="{{ img.name }}" style="display: none;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Delete selected images button -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" id="delete-selected-btn" class="btn btn-danger btn-sm" style="display: none;">Delete Selected</button>
+                </div>
+            </div>
+        </form>
     </div>
-    <!--footer-->
-    {% include 'footer.html' %}    
+
+    {% include 'footer.html' %}
+    
+    <script>
+        function toggleSelection() {
+            const checkboxes = document.querySelectorAll('.image-select-checkbox');
+            const deleteButton = document.getElementById('delete-selected-btn');
+            const selectButton = document.getElementById('select-images-btn');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.style.display = checkbox.style.display === 'none' ? 'inline-block' : 'none';
+            });
+            deleteButton.style.display = deleteButton.style.display === 'none' ? 'inline-block' : 'none';
+
+            selectButton.innerText = selectButton.innerText === 'Select Images' ? 'Cancel Selection' : 'Select Images';
+        }
+    </script>
 </body>
 </html>
