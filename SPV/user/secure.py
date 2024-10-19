@@ -1,18 +1,20 @@
+from .csvfile import csv_access
 import os
 import csv
 from datetime import datetime
-from django.shortcuts import render
-from django.contrib import messages
-from django.conf import settings
-from django.http import HttpResponseBadRequest
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
-from .csvfile import csv_access
-from .tag import get_image_tag 
+from django.conf import settings
+from django.shortcuts import render
+from django.http import HttpResponseBadRequest
+from django.contrib import messages
+from .face_detection import detect_and_crop_faces 
+from .tag import get_image_tag
+from io import BytesIO
 
 def upload(request):
     user_id = request.session.get('user_id')
@@ -26,11 +28,12 @@ def upload(request):
             messages.error(request, 'No images were uploaded.')
             return render(request, 'upload.html')
 
-        # Directory where user's images will be stored
         user_images_dir = os.path.join(settings.IMAGES_VAULT, f'{user_id}SVPimages')
         os.makedirs(user_images_dir, exist_ok=True)
+        
+        face_images_dir = os.path.join(user_images_dir, 'faces')
+        os.makedirs(face_images_dir, exist_ok=True)
 
-        # Path to the user's CSV file for metadata storage
         csv_file_path = os.path.join(settings.META_DATA, f'SPV{user_id}.csv')
 
         try:
@@ -39,27 +42,20 @@ def upload(request):
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
                 for image in images:
-                    # Ensure file name is safe
                     image_name = os.path.basename(image.name)
-                    
-
-                    # Load the image to encrypt
                     image_data = image.read()
 
                     # Generate ECC key pair
                     private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
                     public_key = private_key.public_key()
 
-                    # Serialize the public key to store in the CSV
                     public_key_bytes = public_key.public_bytes(
                         encoding=serialization.Encoding.PEM,
                         format=serialization.PublicFormat.SubjectPublicKeyInfo
                     )
 
-                    # Generate a shared key using ECC
                     shared_key = private_key.exchange(ec.ECDH(), public_key)
 
-                    # Derive a symmetric key from the shared key
                     salt = os.urandom(16)
                     kdf = PBKDF2HMAC(
                         algorithm=hashes.SHA256(),
@@ -70,32 +66,28 @@ def upload(request):
                     )
                     symmetric_key = kdf.derive(shared_key)
 
-                    # Encrypt the image using AES
                     iv = os.urandom(16)
                     cipher = Cipher(algorithms.AES(symmetric_key), modes.CBC(iv), backend=default_backend())
-                    encryptor = cipher.encryptor()
 
-                    # Padding the image data to be a multiple of the block size
-                    padder = padding.PKCS7(algorithms.AES.block_size).padder()
-                    padded_image_data = padder.update(image_data) + padder.finalize()
+                    # Encrypt main image
+                    main_padder = padding.PKCS7(algorithms.AES.block_size).padder()
+                    padded_image_data = main_padder.update(image_data) + main_padder.finalize()
 
-                    ciphertext = encryptor.update(padded_image_data) + encryptor.finalize()
+                    main_encryptor = cipher.encryptor()
+                    ciphertext = main_encryptor.update(padded_image_data) + main_encryptor.finalize()
 
-                    # Save the encrypted image
                     encrypted_image_path = os.path.join(user_images_dir, f'{image_name}.bin')
                     with open(encrypted_image_path, 'wb') as f:
                         f.write(salt + iv + ciphertext)
 
-                    # Save the private key
                     private_key_bytes = private_key.private_bytes(
                         encoding=serialization.Encoding.PEM,
                         format=serialization.PrivateFormat.PKCS8,
                         encryption_algorithm=serialization.NoEncryption()
                     )
 
-                    auto_tag = get_image_tag(image)#auto tad module
+                    auto_tag = get_image_tag(image)
 
-                    # Collect image metadata
                     image_metadata = {
                         'image_name': f'{image_name}.bin',
                         'public_key': public_key_bytes.decode('utf-8'),
@@ -103,20 +95,40 @@ def upload(request):
                         'tags': auto_tag,
                         'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
-
-                    # Write metadata to the CSV file
                     writer.writerow(image_metadata)
 
-            # Optionally, add a success message
-            messages.success(request, 'Images uploaded and encrypted successfully!')
+                    # Detect faces and crop
+                    face_images = detect_and_crop_faces(image_data)
+                    for i, face_image in enumerate(face_images):
+                        face_image_name = f"{image_name}_face_{i}.bin"
+                        face_encrypted_image_path = os.path.join(face_images_dir, face_image_name)
+
+                        # Encrypt each cropped face image separately
+                        face_padder = padding.PKCS7(algorithms.AES.block_size).padder()
+                        face_padded_data = face_padder.update(face_image) + face_padder.finalize()
+
+                        face_encryptor = cipher.encryptor()
+                        face_ciphertext = face_encryptor.update(face_padded_data) + face_encryptor.finalize()
+
+                        with open(face_encrypted_image_path, 'wb') as f:
+                            f.write(salt + iv + face_ciphertext)
+
+                        face_metadata = {
+                            'image_name': face_image_name,
+                            'public_key': public_key_bytes.decode('utf-8'),
+                            'private_key': private_key_bytes.decode('utf-8'),
+                            'tags': 'face',
+                            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                        writer.writerow(face_metadata)
+
+            messages.success(request, 'Images uploaded and encrypted successfully with face images extracted!')
 
         except IOError as e:
             messages.error(request, f"An error occurred while processing the upload: {str(e)}")
             return render(request, 'upload.html')
 
     return render(request, 'upload.html')
-
-
 
 
 def decrypt_image(user_id, image_name, private_key_pem, public_key_pem):

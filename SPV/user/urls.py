@@ -14,7 +14,6 @@ urlpatterns = [
     path('details/<str:image_name>/<str:image_date>/<str:image_tag>/', views.details, name='details'),
     path('delete-image/<str:image_name>/', views.delete_image, name='delete_image'),
     path('delete-multiple-images/', views.delete_multiple_images, name='delete_multiple_images'),
-    path('face-gallary/',views.face_gallary_view, name='face_gallary'), 
-]
+    ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -21,7 +21,7 @@ def send_email(to, otp):
     msg['to'] = to
     user = "spvproject24@gmail.com"
     msg['from'] = user
-    password = ""
+    password = "ghup enlk daqk gidi"
     
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()

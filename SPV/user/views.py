@@ -189,74 +189,52 @@ def details(request,image_name,image_date,image_tag):
     return render(request,'details.html',context)
 
 
-# views.py
-from django.shortcuts import render
-from .face_recognition_utils import extract_face_features, cluster_faces
-import os
 
-def face_gallary_view(request):
-    user_id = request.session.get('user_id')
-    image_folder = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/')
-    image_paths = [os.path.join(image_folder, img) for img in os.listdir(image_folder) if img.endswith(('jpg', 'jpeg', 'png'))]
-    
-    face_data = extract_face_features(image_paths)
-    clustered_faces = cluster_faces(face_data)
-
-    context = {
-        'clustered_faces': clustered_faces,
-        'user_id': user_id,
-    }
-    return render(request, 'face_gallary.html', context)
-
-
-# delete image
 
 def delete_image(request, image_name):
-    # Ensure this view can only be accessed via POST request
     if request.method == "POST":
         user_id = request.session.get('user_id')
-        
-        # Construct the paths for the image and its encrypted version
-        image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/{image_name}')
-        img_name = f"{image_name}.bin"
-        image_path_encrypted = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/{img_name}')
 
-        # Delete the decrypted image if it exists
+        image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/{image_name}')
+        encrypted_image_name = f"{image_name}.bin"
+        encrypted_image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/{encrypted_image_name}')
+
+        # Delete decrypted image
         if os.path.exists(image_path):
             os.remove(image_path)
-        
-        # Delete the encrypted image if it exists
-        if os.path.exists(image_path_encrypted):
-            os.remove(image_path_encrypted)
 
-        # Optionally, remove the image details from the CSV file
+        # Delete encrypted image
+        if os.path.exists(encrypted_image_path):
+            os.remove(encrypted_image_path)
+
+        # Delete face images related to the image
+        face_images_dir = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/faces')
+        for face_image in os.listdir(face_images_dir):
+            if face_image.startswith(image_name):
+                os.remove(os.path.join(face_images_dir, face_image))
+
+        # Update CSV file
         csv_file_path = os.path.join(settings.MEDIA_ROOT, f'meta_data/SPV{user_id}.csv')
         if os.path.exists(csv_file_path):
             updated_rows = []
-            # Read the CSV file and exclude the deleted image from the list
             with open(csv_file_path, 'r') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    if row['image_name'] != img_name:
+                    if row['image_name'] != encrypted_image_name and not row['image_name'].startswith(f"{image_name}_face"):
                         updated_rows.append(row)
-            # Write the updated list back to the CSV file
             with open(csv_file_path, 'w', newline='') as file:
                 writer = csv.DictWriter(file, fieldnames=reader.fieldnames)
                 writer.writeheader()
                 writer.writerows(updated_rows)
 
-        # Redirect back to the gallery page after deletion
-        return redirect('gallary')  # Make sure this matches your URL pattern for the gallery
+        return redirect('gallary')
 
-    # If the request method is not POST, return to the gallery
     return redirect('gallary')
 
 
 def delete_multiple_images(request):
     if request.method == "POST":
-        # Get the list of selected image names from the form
         selected_images = request.POST.getlist('image_names')
-        
         user_id = request.session.get('user_id')
         images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
 
@@ -264,46 +242,38 @@ def delete_multiple_images(request):
             messages.error(request, "No images were selected for deletion.")
             return redirect(reverse('gallary'))
 
-        # Path to the CSV file containing image metadata
         csv_file_path = os.path.join(settings.MEDIA_ROOT, f'meta_data/SPV{user_id}.csv')
 
-        # Remove each selected image
         for image_name in selected_images:
-            # Paths to the decrypted and encrypted images
             decrypted_image_path = os.path.join(images_dir, 'decrypted', image_name)
             encrypted_image_name = f"{image_name}.bin"
             encrypted_image_path = os.path.join(images_dir, encrypted_image_name)
-            
-            # Delete decrypted image if it exists
+
             if os.path.exists(decrypted_image_path):
                 os.remove(decrypted_image_path)
-                
-            # Delete encrypted image if it exists
+
             if os.path.exists(encrypted_image_path):
                 os.remove(encrypted_image_path)
-                
-        # Update the CSV file by removing records of deleted images
+
+            face_images_dir = os.path.join(images_dir, 'faces')
+            for face_image in os.listdir(face_images_dir):
+                if face_image.startswith(image_name):
+                    os.remove(os.path.join(face_images_dir, face_image))
+
         if os.path.exists(csv_file_path):
             updated_rows = []
-            
-            # Read CSV and exclude deleted images
             with open(csv_file_path, 'r') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    if row['image_name'] not in [f"{img}.bin" for img in selected_images]:
+                    if row['image_name'] not in [f"{img}.bin" for img in selected_images] and \
+                       not any(row['image_name'].startswith(f"{img}_face") for img in selected_images):
                         updated_rows.append(row)
-            
-            # Write the updated rows back to the CSV
             with open(csv_file_path, 'w', newline='') as file:
                 writer = csv.DictWriter(file, fieldnames=reader.fieldnames)
                 writer.writeheader()
                 writer.writerows(updated_rows)
-        
-        # Show success message
-        messages.success(request, "Selected images have been deleted successfully.")
-        
-        # Redirect back to the gallery
+
+        messages.success(request, "Selected images and associated faces have been deleted successfully.")
         return redirect(reverse('gallary'))
-    
-    # Redirect to gallery if request method is not POST
+
     return redirect(reverse('gallary'))
