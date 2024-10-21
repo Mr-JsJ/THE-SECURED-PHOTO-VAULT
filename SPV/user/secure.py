@@ -16,6 +16,8 @@ from .face_detection import detect_and_crop_faces
 from .tag import get_image_tag
 from io import BytesIO
 
+#UPLOAD OF IMAGES#
+
 def upload(request):
     user_id = request.session.get('user_id')
 
@@ -97,7 +99,7 @@ def upload(request):
                     }
                     writer.writerow(image_metadata)
 
-                    # Detect faces and crop
+                    # Detect faces and crop face_detection.py
                     face_images = detect_and_crop_faces(image_data)
                     for i, face_image in enumerate(face_images):
                         face_image_name = f"{image_name}_face_{i}.bin"
@@ -131,13 +133,19 @@ def upload(request):
     return render(request, 'upload.html')
 
 
+#DECRPTION OF ENCRYPTED IMAGES#
+
+from PIL import Image
+import io
+
 def decrypt_image(user_id, image_name, private_key_pem, public_key_pem):
     encrypted_image_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', image_name)
     
     # Remove the '.bin' extension for the decrypted file
     decrypted_image_name = os.path.splitext(image_name)[0]  # Remove file extension
     decrypted_image_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'decrypted', decrypted_image_name)
-    
+    decrypted_face_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'decrypted', 'faces')
+
     print(user_id, image_name, private_key_pem, public_key_pem)
 
     # Load the private key from the PEM string
@@ -188,12 +196,40 @@ def decrypt_image(user_id, image_name, private_key_pem, public_key_pem):
 
     # Ensure the decrypted directory exists
     os.makedirs(os.path.dirname(decrypted_image_path), exist_ok=True)
+    os.makedirs(decrypted_face_path, exist_ok=True)  # Ensure the face directory exists
     
-    # Save the decrypted image
+    # Save the decrypted main image
     with open(decrypted_image_path, 'wb') as f:
         f.write(image_data)
 
     print(f"Decrypted image saved to: {decrypted_image_path}")
 
+    # Decrypt corresponding face images
+    face_images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'faces')
+    face_images = [f for f in os.listdir(face_images_dir) if f.startswith(decrypted_image_name)]
 
+    for i, face_image in enumerate(face_images):
+        encrypted_face_path = os.path.join(face_images_dir, face_image)
+        decrypted_face_image_path = os.path.join(decrypted_face_path, f"{decrypted_image_name}_face_{i}.png")  # Change the extension to your desired format
 
+        with open(encrypted_face_path, 'rb') as f:
+            salt = f.read(16)
+            iv = f.read(16)
+            ciphertext = f.read()
+
+        cipher = Cipher(algorithms.AES(symmetric_key), modes.CBC(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+
+        try:
+            padded_face_data = decryptor.update(ciphertext) + decryptor.finalize()
+            unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
+            face_data = unpadder.update(padded_face_data) + unpadder.finalize()
+
+            # Use PIL to save the face image in a specific format
+            image = Image.open(io.BytesIO(face_data))
+            image.save(decrypted_face_image_path, format='PNG')  # Save as PNG or specify any other format
+
+            print(f"Decrypted face image saved to: {decrypted_face_image_path}")
+
+        except ValueError as e:
+            print(f"Decryption of face {face_image} failed: {e}")

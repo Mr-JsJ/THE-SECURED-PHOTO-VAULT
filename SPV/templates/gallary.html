@@ -20,6 +20,9 @@
             width: 50px;
             text-align: center;
         }
+        .img-clickable {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -68,11 +71,11 @@
             <div class="row">
                 {% for img in img_details %}
                 <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
-                    <figure class="effect-ming tm-video-item">
+                    <figure class="effect-ming tm-video-item img-clickable" onclick="handleImageClick('{{ img.name }}', '{{ img.date }}', '{{ img.tag }}')">
                         <img src="{{ MEDIA_URL }}images_vault/{{user_id}}SVPimages/decrypted/{{ img.name }}" alt="Image" class="img-fluid">
                         <figcaption class="d-flex align-items-center justify-content-center">
                             <h2>{{ img.name }}</h2>
-                            <a href="{% url 'details' img.name img.date img.tag %}">View more</a>
+                            <a href="#" onclick="event.preventDefault();">View more</a>
                         </figcaption>
                     </figure>
                     <div class="d-flex justify-content-between tm-text-gray">
@@ -81,7 +84,7 @@
                     </div>
                     <div class="d-flex justify-content-end">
                         <!-- Checkbox for image selection -->
-                        <input type="checkbox" class="image-select-checkbox" name="image_names" value="{{ img.name }}" style="display: none;">
+                        <input type="checkbox" class="image-select-checkbox" id="checkbox-{{ img.name }}" name="image_names" value="{{ img.name }}" style="display: none;">
                     </div>
                 </div>
                 {% endfor %}
@@ -99,6 +102,8 @@
     {% include 'footer.html' %}
     
     <script>
+        let selectionActive = false; // Track if image selection mode is active
+
         function toggleSelection() {
             const checkboxes = document.querySelectorAll('.image-select-checkbox');
             const deleteButton = document.getElementById('delete-selected-btn');
@@ -110,6 +115,22 @@
             deleteButton.style.display = deleteButton.style.display === 'none' ? 'inline-block' : 'none';
 
             selectButton.innerText = selectButton.innerText === 'Select Images' ? 'Cancel Selection' : 'Select Images';
+            selectionActive = !selectionActive;  // Toggle the selection state
+        }
+
+        function handleImageClick(imageName, imageDate, imageTag) {
+            if (selectionActive) {
+                // If selection mode is active, toggle the checkbox
+                toggleCheckbox(imageName);
+            } else {
+                // If selection mode is not active, navigate to the details page
+                window.location.href = `/details/${imageName}/${imageDate}/${imageTag}/`;
+            }
+        }
+
+        function toggleCheckbox(imageName) {
+            const checkbox = document.getElementById(`checkbox-${imageName}`);
+            checkbox.checked = !checkbox.checked;
         }
     </script>
 </body>

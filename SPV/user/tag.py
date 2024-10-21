@@ -1,26 +1,28 @@
 import os
 import numpy as np
+import tensorflow as tf
 from keras.models import load_model
 from keras.preprocessing import image
 from keras.applications.vgg16 import preprocess_input
 from PIL import Image
 
-# Assuming this script is located in 'SPV/user/'
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'fine_tuned_vgg16.h5')
 
-# Load the pre-trained model
+
 model = load_model(MODEL_PATH)
 
-# The categories the model predicts (e.g., 'animal', 'flower', etc.)
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
 CATEGORIES = ['animal', 'flower', 'fruit', 'human', 'landscape', 'vehicles']
 
 def get_image_tag(file):
     try:
-        # Open the image file
+       
         img = Image.open(file)
         
-        # Convert RGBA to RGB if necessary
+        
         if img.mode == 'RGBA':
             img = img.convert('RGB')
         
@@ -45,8 +47,21 @@ def get_image_tag(file):
         # Get the corresponding category label
         predicted_tag = CATEGORIES[predicted_index]
         
+       
+        
         return predicted_tag
     
     except Exception as e:
         print(f"Error processing the image: {str(e)}")
-        return None
+        return None, None
+
+# Example usage
+if __name__ == '__main__':
+    image_path = os.path.join(BASE_DIR, 'example_image.jpg')  # Example image path
+    predicted_tag, confidence = get_image_tag(image_path)
+    
+    if predicted_tag:
+        print(f"Predicted Tag: {predicted_tag} with confidence {confidence:.2f}")
+    else:
+        print("Failed to process the image.")
+

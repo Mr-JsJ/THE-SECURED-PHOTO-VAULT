@@ -1,0 +1,52 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter OTP - Catalog-Z</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">     
+    <style>
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <form class="form" method="post">
+        <p class="title">SPV OTP</p>
+        {% csrf_token %}
+        <p class="message">Please enter the OTP sent to your email.</p>
+        <label>           
+            <input class="input" name="otp" type="text" maxlength="6" placeholder=" " required>
+            <span>OTP</span>
+        </label>
+        {% if messages %}
+        <div id="messages">
+            {% for message in messages %}
+                <div class="{% if message.tags %}{{ message.tags }}-message{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+        <button class="submit">Delete Account</button>
+    </form>
+    <script>
+        // Function to hide the messages after 5 seconds
+        function hideMessages() {
+            const messagesDiv = document.getElementById('messages');
+            if (messagesDiv) {
+                setTimeout(() => {
+                    messagesDiv.style.display = 'none';
+                }, 5000); // 5000 milliseconds = 5 seconds
+            }
+        }
+
+        // Run the function when the page loads
+        window.onload = hideMessages;
+    </script>
+</body>
+</html>

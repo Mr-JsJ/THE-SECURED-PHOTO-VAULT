@@ -3,10 +3,8 @@ import os
 import shutil
 import numpy as np
 
-def similar_faces(input_image_path, folder_path, output_folder, tolerance=0.4):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
+def similar_faces(input_image_path,folder_path,tolerance=0.4):
+    image_names=[]
     print(f"Processing input image {os.path.basename(input_image_path)}...")
     input_image = face_recognition.load_image_file(input_image_path)
     input_face_encodings = face_recognition.face_encodings(input_image)
@@ -26,14 +24,10 @@ def similar_faces(input_image_path, folder_path, output_folder, tolerance=0.4):
                 face_distances = face_recognition.face_distance(input_face_encodings, encoding)
 
                 if any(matches) and np.min(face_distances) <= tolerance:
-                    print(f"Found a similar face in {filename}. Copying to output folder.")
-                    shutil.copy(image_path, os.path.join(output_folder, filename))
+                    print(f"Found a similar face in {filename}.")
+                    image_names.append(filename)
                     break
 
     print("Completed searching for similar faces.")
+    return image_names
 
-if __name__ == "__main__":
-    input_image_path = input("Enter the path of the input image: ")
-    folder_path = input("Enter the folder path containing images to search: ")
-    output_folder = input("Enter the folder path to save similar images: ")
-    similar_faces(input_image_path, folder_path, output_folder)

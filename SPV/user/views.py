@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.conf import settings
 from .secure import upload,decrypt_image
 from PIL import Image
-from .otp import otp_gen,send_email,reg_otp,login_otp,resend_otp
+from .otp import otp_gen,send_email,reg_otp,login_otp,resend_otp,send_email_d,confirm_account_deletion
 from .csvfile import csv_access
 import os
 import pyotp
@@ -13,6 +13,13 @@ import shutil
 from django.urls import reverse
 import csv
 from datetime import datetime
+from .compare import similar_faces
+import os
+import face_recognition
+from django.http import Http404
+import re
+
+
 
 def signup(request):
     if request.method == 'POST':
@@ -106,6 +113,9 @@ def logout(request):
     return redirect('login')
 
 
+
+
+
 def gallary(request):
     user_id = request.session.get('user_id')
     images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
@@ -191,14 +201,14 @@ def details(request,image_name,image_date,image_tag):
 
 
 
-def delete_image(request, image_name):
+def delete_image(request,image_name):
     if request.method == "POST":
         user_id = request.session.get('user_id')
 
         image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/{image_name}')
         encrypted_image_name = f"{image_name}.bin"
         encrypted_image_path = os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/{encrypted_image_name}')
-
+        d_face_path=os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/faces')
         # Delete decrypted image
         if os.path.exists(image_path):
             os.remove(image_path)
@@ -212,7 +222,8 @@ def delete_image(request, image_name):
         for face_image in os.listdir(face_images_dir):
             if face_image.startswith(image_name):
                 os.remove(os.path.join(face_images_dir, face_image))
-
+                dimg=face_image.replace('.bin', '')
+                os.remove(os.path.join(d_face_path, f"{dimg}.png"))
         # Update CSV file
         csv_file_path = os.path.join(settings.MEDIA_ROOT, f'meta_data/SPV{user_id}.csv')
         if os.path.exists(csv_file_path):
@@ -237,7 +248,7 @@ def delete_multiple_images(request):
         selected_images = request.POST.getlist('image_names')
         user_id = request.session.get('user_id')
         images_dir = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages')
-
+        d_face_path=os.path.join(settings.MEDIA_ROOT, f'images_vault/{user_id}SVPimages/decrypted/faces')
         if not selected_images:
             messages.error(request, "No images were selected for deletion.")
             return redirect(reverse('gallary'))
@@ -248,7 +259,7 @@ def delete_multiple_images(request):
             decrypted_image_path = os.path.join(images_dir, 'decrypted', image_name)
             encrypted_image_name = f"{image_name}.bin"
             encrypted_image_path = os.path.join(images_dir, encrypted_image_name)
-
+            
             if os.path.exists(decrypted_image_path):
                 os.remove(decrypted_image_path)
 
@@ -259,7 +270,8 @@ def delete_multiple_images(request):
             for face_image in os.listdir(face_images_dir):
                 if face_image.startswith(image_name):
                     os.remove(os.path.join(face_images_dir, face_image))
-
+                    dimg=face_image.replace('.bin', '')
+                    os.remove(os.path.join(d_face_path, f"{dimg}.png"))
         if os.path.exists(csv_file_path):
             updated_rows = []
             with open(csv_file_path, 'r') as file:
@@ -273,7 +285,86 @@ def delete_multiple_images(request):
                 writer.writeheader()
                 writer.writerows(updated_rows)
 
-        messages.success(request, "Selected images and associated faces have been deleted successfully.")
+       
         return redirect(reverse('gallary'))
 
     return redirect(reverse('gallary'))
+
+# FACE CROPING # 
+def face_recognized_gallery(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        raise Http404("User not found")  # Handle missing user ID
+
+    decrypted_face_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'decrypted', 'faces')
+
+    # Retrieve all images from the decrypted_face_path
+    img_details = []
+    if os.path.exists(decrypted_face_path):
+        try:
+            for filename in os.listdir(decrypted_face_path):
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):  # Adjust extensions as needed
+                    # Load the image and check if it's a face
+                    image_path = os.path.join(decrypted_face_path, filename)
+                    image = face_recognition.load_image_file(image_path)
+                    face_locations = face_recognition.face_locations(image)
+
+                    # Only add to img_details if faces are detected
+                    if face_locations:
+                        img_details.append({'name': filename})
+        except Exception as e:
+            # Log the exception or handle it accordingly
+            print(f"Error loading images: {e}")
+
+    context = {
+        'img_details': img_details,
+        'user_id': user_id,
+    }
+    
+    return render(request, 'face_recognized_gallery.html', context)
+
+
+#FACE SORTED GALLERY #
+def sorted_gallary(request,image_name):
+
+    image_list=[]
+    img_details = []
+    tag='human'
+    user_id = request.session.get('user_id')
+    if not user_id:
+        raise Http404("User not found")
+    print("comparing image",image_name)
+
+    input_image_path = os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'decrypted', 'faces',image_name)
+    folder_path =os.path.join(settings.MEDIA_ROOT, 'images_vault', f'{user_id}SVPimages', 'decrypted', 'faces')
+    image_list=similar_faces(input_image_path, folder_path)
+
+    for name in image_list:
+        new_filename = re.sub(r'_face_\d+\.png$','', name)
+        img_details.append({'name': new_filename,'tag': tag})
+    context = {
+        'img_details':img_details,
+        'MEDIA_URL': settings.MEDIA_URL,
+        'user_id': user_id,}
+    return render(request, 'sorted_gallary.html',context)
+
+
+
+
+def request_account_deletion(request):
+    
+    if request.method == 'POST':
+        email = request.POST['email']
+        try:
+            user = Users.objects.get(email=email)
+            secret = pyotp.random_base32()
+            otp = otp_gen(secret)
+            send_email_d(email, otp)
+            request.session['login_email'] = email
+            request.session['otp_secret'] = secret
+            messages.success(request, 'OTP has been sent to your email.')
+            return redirect('confirm_account_deletion', user_id=user.id)
+        except Users.DoesNotExist:
+            messages.error(request, 'User not found.')
+    return render(request, 'request_account_deletion.html')
+

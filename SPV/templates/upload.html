@@ -9,12 +9,26 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
+    <style>
+        .highlight {
+            font-weight: bold; 
+            color: #3a9877; 
+        }
+
+        .highlight:hover {
+            background-color: #f8f9fa;
+            color: #176654;
+            border-radius: 5px; 
+            padding: 5px; 
+        }
+    </style>
 </head>
-<body>    
+<body>
+        
     <form method="post" class="form" enctype="multipart/form-data">
         {% csrf_token %}
         <p class="title">SVP Upload</p>
-        <a class="nav-link nav-link-1" href="{% url 'gallary' %}">Gallery</a>
+        <a class="nav-link nav-link-1 highlight" href="{% url 'gallary' %}">BACK TO GALLARY</a>
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
