@@ -11,6 +11,36 @@
         .img-clickable {
             cursor: pointer;
         }
+        .img-container {
+            position: relative;
+            overflow: hidden;
+            padding-top: 100%; /* Forces a square aspect ratio */
+        }
+        .img-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures image covers container while maintaining aspect ratio */
+        }
+        figure {
+            margin: 0;
+            padding: 0;
+        }
+        figcaption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5); /* Dark overlay on hover */
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        figure:hover figcaption {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -19,9 +49,11 @@
         <h2 class="tm-text-primary">Face Recognized Photos</h2>
         <div class="row">
             {% for img in img_details %}
-            <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12 mb-5">
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4">
                 <figure class="effect-ming tm-video-item img-clickable" onclick="handleImageClick('{{ img.name }}')">
-                    <img src="{{ MEDIA_URL }}images_vault/{{ user_id }}SVPimages/decrypted/faces/{{ img.name }}" alt="Image" class="img-fluid">
+                    <div class="img-container">
+                        <img src="{{ MEDIA_URL }}images_vault/{{ user_id }}SVPimages/decrypted/faces/{{ img.name }}" alt="{{ img.name }}">
+                    </div>
                     <figcaption class="d-flex align-items-center justify-content-center">
                         <h2>{{ img.name }}</h2>
                         <a href="#" onclick="event.preventDefault();">View more</a>
@@ -36,7 +68,6 @@
         function handleImageClick(imageName) {
             window.location.href = `/sorted_gallary/${imageName}`;
         }
-        
     </script>
 </body>
 </html>

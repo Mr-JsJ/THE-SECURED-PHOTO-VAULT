@@ -11,7 +11,8 @@
     <form method="post" class="form" enctype="multipart/form-data">
         {% csrf_token %}
         <p class="title">Account Deletion</p>
-
+        <p class="title">SVP Upload</p>
+        <a class="nav-link nav-link-1 highlight" href="{% url 'gallary' %}">BACK TO GALLARY</a>
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
